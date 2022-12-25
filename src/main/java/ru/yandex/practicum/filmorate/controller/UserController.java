@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.util.GenerateUserId;
 
 import javax.validation.Valid;
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class UserController {
             user.setName(user.getLogin());
         }
 
-
+        user.setId(GenerateUserId.generateId());
         users.put(user.getId(), user);
         log.info("USER created");
         return new ResponseEntity<>(users.get(user.getId()), HttpStatus.CREATED);

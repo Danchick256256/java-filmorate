@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.model;
 
 
 import lombok.*;
+import org.aspectj.lang.annotation.After;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
@@ -13,16 +14,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Entity
 public class Film {
-    private static int filmId = 1;
-
-    public static int generateId() {
-        return filmId++;
-    }
-    public Film() {
-        this.id = generateId();
-    }
-
     @Getter
+    @Setter
     @Id
     private int id;
     @NotBlank(message = "Film Name is Mandatory")
