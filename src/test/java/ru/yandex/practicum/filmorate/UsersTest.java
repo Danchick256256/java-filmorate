@@ -1,99 +1,84 @@
 package ru.yandex.practicum.filmorate;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import ru.yandex.practicum.filmorate.controller.UserController;
+import ru.yandex.practicum.filmorate.model.User;
+
+import javax.validation.ValidationException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
-public class UsersTest {
+class UsersTest {
+    private final UserController userController = new UserController();
 
-    @BeforeAll
-    public static void createUser() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"dolore\",\n  \"name\": \"Nick Name\",\n  \"email\": \"mail@mail.ru\",\n  \"birthday\": \"1946-08-20\"\n}")
-                .asString();
-        assertEquals(201, response.getStatus());
+    @Test
+    void createUser() {
+        User user = new User(1, "test@gmail.com", "testLogin", "testName", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ResponseEntity<User> createdUser = userController.create(user);
+        assertEquals(createdUser, new ResponseEntity<>(user, HttpStatus.CREATED));
     }
 
     @Test
-    void createUserFailLogin() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"dolore ullamco\",\n  \"email\": \"yandex@mail.ru\",\n  \"birthday\": \"2446-08-20\"\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void failedLogin() {
+        User user = new User(1, "test@gmail.com", "", "testName", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> userController.create(user));
+        assertEquals("{wrong.login}", validationException.getMessage());
     }
 
     @Test
-    void createUserFailEmail() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"dolore ullamco\",\n  \"name\": \"\",\n  \"email\": \"mail.ru\",\n  \"birthday\": \"1980-08-20\"\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void failedEmail() {
+        User user = new User(1, "mail", "login", "testName", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> userController.create(user));
+        assertEquals("{wrong.email}", validationException.getMessage());
     }
 
     @Test
-    void createUserFailBirthDay() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"dolore\",\n  \"name\": \"\",\n  \"email\": \"test@mail.ru\",\n  \"birthday\": \"2446-08-20\"\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void failedBirthday() {
+        User user = new User(1, "test@mail.ru", "login", "testName", LocalDate.parse("3995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> userController.create(user));
+        assertEquals("{birthday.is.after.now}", validationException.getMessage());
     }
 
     @Test
-    void userUpdateUnknown() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.put("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"doloreUpdate\",\n  \"name\": \"est adipisicing\",\n  \"id\": 9999,\n  \"email\": \"mail@yandex.ru\",\n  \"birthday\": \"1976-09-20\"\n}")
-                .asString();
-        assertEquals(500, response.getStatus());
+    void updateUnknownUser() {
+        User user = new User(1, "test@gmail.com", "testLogin", "testName", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        userController.create(user);
+        User updatedUser = new User(11, "new@gmail.com", "testLogin", "testName", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> userController.update(updatedUser));
+        assertEquals("{unknown.user}", validationException.getMessage());
     }
 
     @Test
-    void getAllUsers() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.get("http://localhost:8080/users")
-                .header("Accept", "*/*")
-                .asString();
-        assertEquals(200, response.getStatus());
+    void createUserWithEmptyName() {
+        User user = new User(1, "test@gmail.com", "testLogin", "", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ResponseEntity<User> createdUser = userController.create(user);
+        assertEquals(Objects.requireNonNull(createdUser.getBody()).getName(), user.getLogin());
     }
 
     @Test
-    void createUserWithEmptyName() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"common\",\n  \"email\": \"friend@common.ru\",\n  \"birthday\": \"2000-08-20\"\n}")
-                .asString();
-        assertEquals(201, response.getStatus());
-    }
-
-    @Test
-    void userUpdate() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.put("http://localhost:8080/users")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"login\": \"doloreUpdate\",\n  \"name\": \"est adipisicing\",\n  \"id\": 1,\n  \"email\": \"mail@yandex.ru\",\n  \"birthday\": \"1976-09-20\"\n}")
-                .asString();
-        assertEquals(200, response.getStatus());
+    void getAll() {
+        User user = new User(10, "test@gmail.com", "testLogin", "testName", LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        userController.create(user);
+        ResponseEntity<List<User>> createdUser = userController.getAll();
+        List<User> userList = new ArrayList<>();
+        userList.add(user);
+        assertEquals(createdUser, new ResponseEntity<>(userList, HttpStatus.OK));
     }
 }

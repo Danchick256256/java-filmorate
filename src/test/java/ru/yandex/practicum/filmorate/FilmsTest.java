@@ -1,99 +1,92 @@
 package ru.yandex.practicum.filmorate;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
-import com.mashape.unirest.http.exceptions.UnirestException;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import ru.yandex.practicum.filmorate.controller.FilmController;
+import ru.yandex.practicum.filmorate.model.Film;
+
+import javax.validation.ValidationException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
-public class FilmsTest {
+class FilmsTest {
 
-    @BeforeAll
-    public static void createFilm() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"name\": \"nisi eiusmod\",\n  \"description\": \"adipisicing\",\n  \"releaseDate\": \"1967-03-25\",\n  \"duration\": 100\n}")
-                .asString();
-        assertEquals(201, response.getStatus());
+    private final FilmController filmController = new FilmController();
+
+    @Test
+    void createFilm() {
+        Film film = new Film(1, "testFilm", "testDescription", 100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ResponseEntity<Film> createdFilm = filmController.create(film);
+        assertEquals(createdFilm, new ResponseEntity<>(film, HttpStatus.CREATED));
     }
 
     @Test
-    void getAllFilms() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.get("http://localhost:8080/films")
-                .header("Accept", "*/*")
-                .asString();
-        assertEquals(200, response.getStatus());
+    void updateFilm() {
+        Film film = new Film(1, "testFilm", "newDesc", 100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        filmController.create(film);
+        ResponseEntity<Film> updatedFilm = filmController.update(film);
+        assertEquals(updatedFilm, new ResponseEntity<>(film, HttpStatus.OK));
     }
 
     @Test
-    void createFilmFailName() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"name\": \"\",\n  \"description\": \"Description\",\n  \"releaseDate\": \"1900-03-25\",\n  \"duration\": 200\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void emptyName() {
+        Film film = new Film(1, "", "newDesc", 100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> filmController.create(film));
+        assertEquals("{name.is.empty.or.null}", validationException.getMessage());
     }
 
     @Test
-    void createFilmFailDescription() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"name\": \"Film name\",\n  \"description\": \"Пятеро друзей ( комик-группа «Шарло»), приезжают в город Бризуль. Здесь они хотят разыскать господина Огюста Куглова, который задолжал им деньги, а именно 20 миллионов. о Куглов, который за время «своего отсутствия», стал кандидатом Коломбани.\",\n    \"releaseDate\": \"1900-03-25\",\n  \"duration\": 200\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void longDescription() {
+        Film film = new Film(1, "filmName", "c".repeat(210), 100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> filmController.create(film));
+        assertEquals("{description.is.too.long}", validationException.getMessage());
     }
 
     @Test
-    void createFilmFailReleaseDate() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"name\": \"Name\",\n  \"description\": \"Description\",\n  \"releaseDate\": \"2090-03-25\",\n  \"duration\": 200\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void failReleaseDate() {
+        Film film = new Film(1, "filmName", "newDesc", 100, LocalDate.parse("1795-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> filmController.create(film));
+        assertEquals("{releaseDate.is.before.1895-12-28}", validationException.getMessage());
     }
 
     @Test
-    void createFilmFailDuration() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.post("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"name\": \"Name\",\n  \"description\": \"Descrition\",\n  \"releaseDate\": \"1980-03-25\",\n  \"duration\": -200\n}")
-                .asString();
-        assertEquals(400, response.getStatus());
+    void failDuration() {
+        Film film = new Film(1, "filmName", "newDesc", -100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> filmController.create(film));
+        assertEquals("{duration.is.negative}", validationException.getMessage());
     }
 
     @Test
-    void filmUpdateUnknown() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.put("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"id\": 9999,\n  \"name\": \"Film Updated\",\n  \"releaseDate\": \"1989-04-17\",\n  \"description\": \"New film update decription\",\n  \"duration\": 190,\n  \"rate\": 4\n}")
-                .asString();
-        assertEquals(500, response.getStatus());
+    void updateUnknown() {
+        Film newFilm = new Film(100, "testFilm", "newDesc", 100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        ValidationException validationException = assertThrows(
+                ValidationException.class,
+                () -> filmController.update(newFilm));
+        assertEquals("{unknown.film}", validationException.getMessage());
     }
 
     @Test
-    void filmUpdate() throws UnirestException {
-        Unirest.setTimeouts(0, 0);
-        HttpResponse<String> response = Unirest.put("http://localhost:8080/films")
-                .header("Content-Type", "application/json")
-                .header("Accept", "*/*")
-                .body("{\n  \"id\": 1,\n  \"name\": \"Film Updated\",\n  \"releaseDate\": \"1989-04-17\",\n  \"description\": \"New film update decription\",\n  \"duration\": 190,\n  \"rate\": 4\n}")
-                .asString();
-        assertEquals(200, response.getStatus());
+    void getAll() {
+        Film film = new Film(1, "testFilm", "testDescription", 100, LocalDate.parse("1995-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        filmController.create(film);
+        ResponseEntity<List<Film>> createdFilm = filmController.getAll();
+        List<Film> filmList = new ArrayList<>();
+        filmList.add(film);
+        assertEquals(createdFilm, new ResponseEntity<>(filmList, HttpStatus.OK));
     }
 }

@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.util.GenerateFilmId;
 
 import javax.validation.Valid;
+import javax.validation.ValidationException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -23,7 +24,23 @@ public class FilmController {
     public ResponseEntity<Film> create(@Valid @RequestBody Film film) {
         log.info("POST request, create FILM");
         if (!film.getReleaseDate().isAfter(LocalDate.parse("1895-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")))) {
-            return new ResponseEntity<>(film, HttpStatus.INTERNAL_SERVER_ERROR);
+            log.error("ReleaseDate is before 1895-12-28");
+            throw new ValidationException("{releaseDate.is.before.1895-12-28}");
+        }
+
+        if (film.getDescription().length() >= 200) {
+            log.error("Description more than 200 characters");
+            throw new ValidationException("{description.is.too.long}");
+        }
+
+        if (film.getName().isBlank() || film.getName() == null) {
+            log.error("Name is Empty or Null");
+            throw new ValidationException("{name.is.empty.or.null}");
+        }
+
+        if (film.getDuration() < 0) {
+            log.error("Film duration is negative");
+            throw new ValidationException("{duration.is.negative}");
         }
 
         film.setId(GenerateFilmId.generateId());
@@ -38,7 +55,7 @@ public class FilmController {
             films.replace(film.getId(), film);
             return new ResponseEntity<>(films.get(film.getId()), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(film, HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new ValidationException("{unknown.film}");
         }
     }
 
