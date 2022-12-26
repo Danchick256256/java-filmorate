@@ -9,11 +9,12 @@ import ru.yandex.practicum.filmorate.util.GenerateFilmId;
 
 import javax.validation.Valid;
 import javax.validation.ValidationException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+
+import static ru.yandex.practicum.filmorate.Constants.earliestFilmDate;
 
 @RestController
 @Slf4j
@@ -23,7 +24,7 @@ public class FilmController {
     @PostMapping("/films")
     public ResponseEntity<Film> create(@Valid @RequestBody Film film) {
         log.info("POST request, create FILM");
-        if (!film.getReleaseDate().isAfter(LocalDate.parse("1895-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")))) {
+        if (!film.getReleaseDate().isAfter(earliestFilmDate)) {
             log.error("ReleaseDate is before 1895-12-28");
             throw new ValidationException("{releaseDate.is.before.1895-12-28}");
         }
