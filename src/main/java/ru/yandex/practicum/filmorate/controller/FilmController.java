@@ -32,7 +32,7 @@ public class FilmController {
     @GetMapping("/{id}")
     public Film getFilm(@PathVariable int id) {
         if (filmService.getFilm(id) == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Film not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film not found");
         }
         log.info("GET request, get FILM");
         return filmService.getFilm(id);
@@ -56,7 +56,7 @@ public class FilmController {
     @ResponseStatus(HttpStatus.OK)
     public Film updateFilm(@Valid @RequestBody Film film) {
         if (filmService.getFilm(film.getId()) == null) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Film not found");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film not found");
         }
         return filmService.updateFilm(film);
     }
