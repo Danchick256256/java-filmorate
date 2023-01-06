@@ -1,68 +1,83 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import ru.yandex.practicum.filmorate.model.Film;
+import ru.yandex.practicum.filmorate.service.film.FilmService;
 import ru.yandex.practicum.filmorate.util.GenerateFilmId;
 
 import javax.validation.Valid;
-import javax.validation.ValidationException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import ru.yandex.practicum.filmorate.Constants.*;
 
-import static ru.yandex.practicum.filmorate.Constants.earliestFilmDate;
-
-@RestController
 @Slf4j
+@RestController
+@RequestMapping("/films")
 public class FilmController {
-    private final HashMap<Integer, Film> films = new HashMap<>();
+    private final FilmService filmService;
 
-    @PostMapping("/films")
-    public ResponseEntity<Film> create(@Valid @RequestBody Film film) {
-        log.info("POST request, create FILM");
-        if (!film.getReleaseDate().isAfter(earliestFilmDate)) {
+    @Autowired
+    public FilmController(FilmService filmService) {
+        this.filmService = filmService;
+    }
+
+    @PostMapping()
+    @ResponseStatus(HttpStatus.CREATED)
+    public Film createFilm(@Valid @RequestBody Film film) {
+        if (!film.getReleaseDate().isAfter(LocalDate.parse("1895-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")))) {
             log.error("ReleaseDate is before 1895-12-28");
-            throw new ValidationException("{releaseDate.is.before.1895-12-28}");
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "{releaseDate.is.before.1895-12-28}");
         }
-
-        if (film.getDescription().length() >= 200) {
-            log.error("Description more than 200 characters");
-            throw new ValidationException("{description.is.too.long}");
-        }
-
-        if (film.getName().isBlank() || film.getName() == null) {
-            log.error("Name is Empty or Null");
-            throw new ValidationException("{name.is.empty.or.null}");
-        }
-
-        if (film.getDuration() < 0) {
-            log.error("Film duration is negative");
-            throw new ValidationException("{duration.is.negative}");
-        }
+        log.info("{POST.request.create.film}");
 
         film.setId(GenerateFilmId.generateId());
-        films.put(film.getId(), film);
-        return new ResponseEntity<>(films.get(film.getId()), HttpStatus.CREATED);
+        filmService.createFilm(film);
+        return film;
     }
 
-    @PutMapping("/films")
-    public ResponseEntity<Film> update(@Valid @RequestBody Film film) {
-
-        if(films.containsKey(film.getId())){
-            films.replace(film.getId(), film);
-            return new ResponseEntity<>(films.get(film.getId()), HttpStatus.OK);
-        } else {
-            throw new ValidationException("{unknown.film}");
+    @PutMapping()
+    @ResponseStatus(HttpStatus.OK)
+    public Film updateFilm(@Valid @RequestBody Film film) {
+        if (filmService.getFilm(film.getId()) == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Film not found");
         }
+        return filmService.updateFilm(film);
     }
 
-    @GetMapping("/films")
-    public ResponseEntity<List<Film>> getAll() {
+    @GetMapping()
+    public ArrayList<Film> getAllFilms() {
         log.info("GET request, get all FILM");
-        return new ResponseEntity<>(new ArrayList<>(films.values()), HttpStatus.OK);
+        return filmService.getAllFilms();
+    }
+
+    @PutMapping("/{id}/like/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void addLike(@PathVariable int id, @PathVariable int userId) {
+        filmService.addLike(id, userId);
+    }
+
+    @DeleteMapping("/{id}/like/{userId}")
+    @ResponseStatus(HttpStatus.OK)
+    public void deleteLike(@PathVariable int id, @PathVariable int userId) {
+        filmService.deleteLike(id, userId);
+    }
+
+    @GetMapping("/popular")
+    @ResponseStatus(HttpStatus.OK)
+    public List<Film> getPopular(@RequestParam(defaultValue = "10") Integer count) {
+        List<Film> allFilms = getAllFilms();
+        return allFilms
+                .stream()
+                .sorted((o1, o2) -> filmService.getLikes(o2.getId()).size() - filmService.getLikes(o1.getId()).size())
+                .limit(count)
+                .collect(Collectors.toList());
     }
 }
