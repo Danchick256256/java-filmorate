@@ -31,6 +31,9 @@ public class FilmController {
 
     @GetMapping("/{id}")
     public Film getFilm(@PathVariable int id) {
+        if (filmService.getFilm(id) == null) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Film not found");
+        }
         log.info("GET request, get FILM");
         return filmService.getFilm(id);
     }
