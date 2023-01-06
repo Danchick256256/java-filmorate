@@ -29,6 +29,12 @@ public class FilmController {
         this.filmService = filmService;
     }
 
+    @GetMapping("/{id}")
+    public Film getFilm(@PathVariable int id) {
+        log.info("GET request, get FILM");
+        return filmService.getFilm(id);
+    }
+
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public Film createFilm(@Valid @RequestBody Film film) {
