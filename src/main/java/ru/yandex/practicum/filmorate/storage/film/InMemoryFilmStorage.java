@@ -23,13 +23,13 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Film getFilm(int id) {
-        return films.get(id);
+    public Optional<Film> getFilm(int filmId) {
+        return Optional.ofNullable(films.get(filmId));
     }
 
     @Override
-    public void deleteFilm(int id) {
-        films.remove(id);
+    public void deleteFilm(int filmId) {
+        films.remove(filmId);
     }
 
     @Override
@@ -49,12 +49,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     @Override
-    public Optional<Set<Integer>> loadLikes(int id) {
-        return Optional.ofNullable(filmLikes.get(id));
+    public Optional<Set<Integer>> loadLikes(int filmId) {
+        return Optional.ofNullable(filmLikes.get(filmId));
     }
 
     @Override
-    public boolean filmContains(int id) {
-        return films.containsKey(id);
+    public boolean filmExisting(int filmId) {
+        return films.containsKey(filmId);
     }
 }

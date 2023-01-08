@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.exceptionHandler;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,10 +11,9 @@ import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 @Slf4j
 @RestControllerAdvice
 public class ErrorHandler {
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Not Found")
     @ExceptionHandler(NotFoundException.class)
-    public String handleNoSuchElementFoundException(NotFoundException ex) {
-        log.error("{user.not.found}:{}", ex.getMessage());
-        return ex.getMessage();
+    public void handleNoSuchElementFoundException(NotFoundException ex) {
+
     }
 }

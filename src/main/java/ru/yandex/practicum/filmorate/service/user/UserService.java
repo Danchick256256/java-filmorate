@@ -1,26 +1,20 @@
 package ru.yandex.practicum.filmorate.service.user;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.storage.user.InMemoryUserStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.*;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class UserService {
     private final UserStorage userStorage;
-
-    @Autowired
-    public UserService(InMemoryUserStorage storage) {
-        this.userStorage = storage;
-    }
 
     public User createUser(User user) {
         if (user.getName() == null || user.getName().isBlank()) {
@@ -32,8 +26,8 @@ public class UserService {
     }
 
     public User updateUser(User user) {
-        log.info(String.valueOf(userStorage.userContains(user.getId())));
-        if (!userStorage.userContains(user.getId())) {
+        log.info(String.valueOf(userStorage.userExisting(user.getId())));
+        if (!userStorage.userExisting(user.getId())) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
 
@@ -52,18 +46,18 @@ public class UserService {
     }
 
     public User getUser(int id) {
-        User user = userStorage.getUser(id);
-        if (user == null) {
+        Optional<User> user = userStorage.getUser(id);
+        if (user.isPresent()) {
+            log.info("{get.user}:{}", user);
+            return user.get();
+        } else {
             log.info("{user.not.found}");
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        } else {
-            log.info("{get.user}:{}", user);
-            return user;
         }
     }
 
     public void addFriendsToEachOther(int userId, int friendId) {
-        if (!userStorage.userContains(userId) || !userStorage.userContains(friendId)) {
+        if (!userStorage.userExisting(userId) || !userStorage.userExisting(friendId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
         addFriend(userId, friendId);
@@ -71,7 +65,7 @@ public class UserService {
     }
 
     public void deleteFriendsToEachOther(int userId, int friendId) {
-        if (!userStorage.userContains(userId) || !userStorage.userContains(friendId)) {
+        if (!userStorage.userExisting(userId) || !userStorage.userExisting(friendId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
         }
         deleteFriend(userId, friendId);
@@ -98,7 +92,7 @@ public class UserService {
         Set<Integer> friends = userStorage.getFriends(userId).orElseGet(HashSet::new);
         List<User> friendsList = new ArrayList<>();
         for (Integer id : friends) {
-            friendsList.add(userStorage.getUser(id));
+            friendsList.add(userStorage.getUser(id).get());
         }
         return friendsList;
     }

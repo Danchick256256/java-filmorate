@@ -18,8 +18,8 @@ public class InMemoryUserStorage implements UserStorage{
     }
 
     @Override
-    public User getUser(int id) {
-        return users.get(id);
+    public Optional<User> getUser(int id) {
+        return Optional.ofNullable(users.get(id));
     }
 
     @Override
@@ -38,7 +38,7 @@ public class InMemoryUserStorage implements UserStorage{
     }
 
     @Override
-    public boolean userContains(int id) {
+    public boolean userExisting(int id) {
         return users.containsKey(id);
     }
 

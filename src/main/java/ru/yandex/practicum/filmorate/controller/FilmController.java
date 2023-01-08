@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -14,6 +15,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import ru.yandex.practicum.filmorate.Constants.*;
@@ -21,19 +23,11 @@ import ru.yandex.practicum.filmorate.Constants.*;
 @Slf4j
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
     private final FilmService filmService;
-
-    @Autowired
-    public FilmController(FilmService filmService) {
-        this.filmService = filmService;
-    }
-
     @GetMapping("/{id}")
     public Film getFilm(@PathVariable int id) {
-        if (filmService.getFilm(id) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film not found");
-        }
         log.info("GET request, get FILM");
         return filmService.getFilm(id);
     }
@@ -55,14 +49,11 @@ public class FilmController {
     @PutMapping()
     @ResponseStatus(HttpStatus.OK)
     public Film updateFilm(@Valid @RequestBody Film film) {
-        if (filmService.getFilm(film.getId()) == null) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Film not found");
-        }
         return filmService.updateFilm(film);
     }
 
     @GetMapping()
-    public ArrayList<Film> getAllFilms() {
+    public List<Film> getAllFilms() {
         log.info("GET request, get all FILM");
         return filmService.getAllFilms();
     }

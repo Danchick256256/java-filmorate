@@ -8,11 +8,11 @@ import java.util.Set;
 
 public interface FilmStorage {
     void createFilm(Film film);
-    Film getFilm(int id);
-    void deleteFilm(int id);
+    Optional<Film> getFilm(int filmId);
+    void deleteFilm(int filmId);
     Film updateFilm(Film film);
     ArrayList<Film> getAllFilms();
     void saveLikes(int id, Set<Integer> newLikes);
-    Optional<Set<Integer>> loadLikes(int id);
-    boolean filmContains(int id);
+    Optional<Set<Integer>> loadLikes(int filmId);
+    boolean filmExisting(int filmId);
 }
