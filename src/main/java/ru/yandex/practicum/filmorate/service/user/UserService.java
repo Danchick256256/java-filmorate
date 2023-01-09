@@ -2,9 +2,8 @@ package ru.yandex.practicum.filmorate.service.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
@@ -28,7 +27,7 @@ public class UserService {
     public User updateUser(User user) {
         log.info(String.valueOf(userStorage.userExisting(user.getId())));
         if (!userStorage.userExisting(user.getId())) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new NotFoundException("User not found");
         }
 
         if (user.getName() == null || user.getName().isBlank()) {
@@ -52,13 +51,13 @@ public class UserService {
             return user.get();
         } else {
             log.info("{user.not.found}");
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new NotFoundException("User not found");
         }
     }
 
     public void addFriendsToEachOther(int userId, int friendId) {
         if (!userStorage.userExisting(userId) || !userStorage.userExisting(friendId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new NotFoundException("User not found");
         }
         addFriend(userId, friendId);
         addFriend(friendId, userId);
@@ -66,7 +65,7 @@ public class UserService {
 
     public void deleteFriendsToEachOther(int userId, int friendId) {
         if (!userStorage.userExisting(userId) || !userStorage.userExisting(friendId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
+            throw new NotFoundException("User not found");
         }
         deleteFriend(userId, friendId);
         deleteFriend(friendId, userId);
