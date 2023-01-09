@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.yandex.practicum.filmorate.exceptions.BadRequestException;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.film.FilmService;
@@ -32,7 +33,7 @@ public class FilmController {
     public Film createFilm(@Valid @RequestBody Film film) {
         if (!film.getReleaseDate().isAfter(LocalDate.parse("1895-12-28", DateTimeFormatter.ofPattern("yyyy-MM-dd")))) {
             log.error("ReleaseDate is before 1895-12-28");
-            throw new NotFoundException("{releaseDate.is.before.1895-12-28}");
+            throw new BadRequestException("{releaseDate.is.before.1895-12-28}");
         }
         log.info("{POST.request.create.film}");
 
