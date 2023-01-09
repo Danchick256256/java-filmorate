@@ -18,7 +18,7 @@ public class ErrorHandler {
 
     }
 
-    @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "Bad Request")
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Bad Request")
     @ExceptionHandler(BadRequestException.class)
     public void handleBadRequestException(BadRequestException ex) {
 
