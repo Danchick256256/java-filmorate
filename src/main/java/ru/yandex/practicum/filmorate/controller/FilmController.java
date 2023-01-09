@@ -12,12 +12,8 @@ import ru.yandex.practicum.filmorate.util.GenerateFilmId;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
-
-import ru.yandex.practicum.filmorate.Constants.*;
 
 @Slf4j
 @RestController
