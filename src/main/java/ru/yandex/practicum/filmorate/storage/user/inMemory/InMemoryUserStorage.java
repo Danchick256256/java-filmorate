@@ -1,46 +1,21 @@
-package ru.yandex.practicum.filmorate.storage.user;
+package ru.yandex.practicum.filmorate.storage.user.inMemory;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 @Component
-public class InMemoryUserStorage implements UserStorage{
+@Qualifier("UserInMemory")
+public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users;
     private final Map<Integer, Set<Integer>> friends;
-
-    @Override
-    public void createUser(User user) {
-        users.put(user.getId(), user);
-    }
-
-    @Override
-    public Optional<User> getUser(int id) {
-        return Optional.ofNullable(users.get(id));
-    }
-
-    @Override
-    public void deleteUser(int id) {
-        users.remove(id);
-    }
-
-    @Override
-    public void updateUser(User user) {
-        users.replace(user.getId(), user);
-    }
-
-    @Override
-    public ArrayList<User> getAllUsers() {
-        return new ArrayList<>(users.values());
-    }
-
-    @Override
-    public boolean userExisting(int id) {
-        return users.containsKey(id);
-    }
 
     public InMemoryUserStorage() {
         users = new HashMap<>();
@@ -48,13 +23,47 @@ public class InMemoryUserStorage implements UserStorage{
     }
 
     @Override
-    public void saveFriend(int id, Set<Integer> likes) {
-        friends.put(id, likes);
-        log.info("{added.friends.to}:{}", id);
+    public User createUser(User user) {
+        int userId = user.getId();
+        users.put(userId, user);
+        return users.get(userId);
     }
-
     @Override
-    public Optional<Set<Integer>> getFriends(int id) {
-        return Optional.ofNullable(friends.get(id));
+    public User getUser(int id) {
+        Optional<User> user = Optional.ofNullable(users.get(id));
+        if (user.isPresent()) {
+            return user.get();
+        } else {
+            throw new NotFoundException("User not found");
+        }
+    }
+    @Override
+    public void deleteUser(int id) {
+        users.remove(id);
+    }
+    @Override
+    public User updateUser(User user) {
+        int userId = user.getId();
+        if (users.containsKey(userId)) {
+            users.replace(userId, user);
+            return users.get(userId);
+        } else {
+            throw new NotFoundException("User not found");
+        }
+    }
+    @Override
+    public Stream<User> getAllUsers() {
+        return users.values().stream();
+    }
+    @Override
+    public void saveFriend(int id, Set<Integer> likes) {
+        if (!users.containsKey(id)) {
+            throw new NotFoundException("User not found");
+        }
+        friends.put(id, likes);
+    }
+    @Override
+    public Stream<Integer> getFriends(int id) {
+        return friends.get(id) == null ? Stream.empty() : friends.get(id).stream();
     }
 }

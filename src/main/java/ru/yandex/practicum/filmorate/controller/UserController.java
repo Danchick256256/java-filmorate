@@ -25,11 +25,8 @@ public class UserController {
         if (user.getName() == null || user.getName().equals("")) {
             user.setName(user.getLogin());
         }
-
         user.setId(GenerateUserId.generateId());
-        User createdUser = userService.createUser(user);
-        log.info("{created.user}:{}", createdUser);
-        return createdUser;
+        return userService.createUser(user);
     }
 
     @PutMapping()
@@ -80,10 +77,10 @@ public class UserController {
         return userService.getFriendsList(userId);
     }
 
-    @GetMapping("/{userId}/friends/common/{otherId}")
+    @GetMapping("/{id}/friends/common/{otherId}")
     @ResponseStatus(HttpStatus.OK)
-    public List<User> getFriends(@PathVariable int userId, @PathVariable int otherId) {
-        log.debug("{GET.request.get.user.common.friends}");
-        return userService.getCommonFriends(userId, otherId);
+    public List<User> getFriends(@PathVariable int id, @PathVariable int otherId) {
+        log.info("{GET.request.get.user.common.friends}");
+        return userService.getCommonFriends(id, otherId);
     }
 }

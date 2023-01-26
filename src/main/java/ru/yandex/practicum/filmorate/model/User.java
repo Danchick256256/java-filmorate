@@ -14,7 +14,7 @@ import java.time.LocalDate;
 public class User {
     private static int userId = 1;
 
-    public static int generateId() {
+    private static int generateId() {
         return userId++;
     }
     public User() {

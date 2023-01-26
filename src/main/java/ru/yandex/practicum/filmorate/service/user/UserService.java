@@ -3,11 +3,13 @@ package ru.yandex.practicum.filmorate.service.user;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -19,79 +21,61 @@ public class UserService {
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        userStorage.createUser(user);
+        User createdUser = userStorage.createUser(user);
         log.info("{user.created}:{}", user);
-        return user;
+        return createdUser;
     }
 
     public User updateUser(User user) {
-        log.info(String.valueOf(userStorage.userExisting(user.getId())));
-        if (!userStorage.userExisting(user.getId())) {
-            throw new NotFoundException("User not found");
-        }
-
         if (user.getName() == null || user.getName().isBlank()) {
             user.setName(user.getLogin());
         }
-        userStorage.updateUser(user);
+        User updatedUser = userStorage.updateUser(user);
         log.info("{user.updated}:{}", user);
-        return user;
+        return updatedUser;
     }
 
     public List<User> getAllUsers() {
-        ArrayList<User> users = userStorage.getAllUsers();
+        List<User> users = userStorage.getAllUsers().collect(Collectors.toList());
         log.info("{get.all.users}:{}", users.size());
         return users;
     }
 
     public User getUser(int id) {
-        Optional<User> user = userStorage.getUser(id);
-        if (user.isPresent()) {
-            log.info("{get.user}:{}", user);
-            return user.get();
-        } else {
-            log.info("{user.not.found}");
-            throw new NotFoundException("User not found");
-        }
+        return userStorage.getUser(id);
     }
 
     public void addFriendsToEachOther(int userId, int friendId) {
-        if (!userStorage.userExisting(userId) || !userStorage.userExisting(friendId)) {
-            throw new NotFoundException("User not found");
-        }
         addFriend(userId, friendId);
         addFriend(friendId, userId);
     }
 
     public void deleteFriendsToEachOther(int userId, int friendId) {
-        if (!userStorage.userExisting(userId) || !userStorage.userExisting(friendId)) {
-            throw new NotFoundException("User not found");
-        }
         deleteFriend(userId, friendId);
         deleteFriend(friendId, userId);
     }
 
     protected void addFriend(int userId, int friendId) {
-        Set<Integer> likes = userStorage.getFriends(userId).orElseGet(HashSet::new);
+        Set<Integer> likes = userStorage.getFriends(userId).collect(Collectors.toSet());
         likes.add(friendId);
         userStorage.saveFriend(userId, likes);
     }
 
     protected void deleteFriend(int userId, int friendId) {
-        Set<Integer> likes = userStorage.getFriends(userId).orElseGet(HashSet::new);
+        Set<Integer> likes = userStorage.getFriends(userId).collect(Collectors.toSet());
         likes.remove(friendId);
         userStorage.saveFriend(userId, likes);
     }
 
-    public Optional<Set<Integer>> getFriends(int userId) {
-        return userStorage.getFriends(userId);
+    public List<Integer> getFriends(int userId) {
+        return userStorage.getFriends(userId).collect(Collectors.toList());
     }
 
     public List<User> getFriendsList(int userId) {
-        Set<Integer> friends = userStorage.getFriends(userId).orElseGet(HashSet::new);
+        Set<Integer> friends = userStorage.getFriends(userId).collect(Collectors.toSet());
         List<User> friendsList = new ArrayList<>();
         for (Integer id : friends) {
-            friendsList.add(userStorage.getUser(id).get());
+            friendsList.add(userStorage.getUser(id));
         }
         return friendsList;
     }
@@ -109,5 +93,4 @@ public class UserService {
         }
         return returnedList;
     }
-
 }
