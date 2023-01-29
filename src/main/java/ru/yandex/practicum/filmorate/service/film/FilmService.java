@@ -3,7 +3,6 @@ package ru.yandex.practicum.filmorate.service.film;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.film.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.user.UserStorage;
@@ -40,20 +39,14 @@ public class FilmService {
     }
 
     public void addLike(int filmId, int userId) {
-        Set<Integer> likes = filmStorage.loadLikes(filmId).collect(Collectors.toSet());
-        likes.add(userId);
-        filmStorage.saveLikes(filmId, likes);
+        filmStorage.addLike(filmId, userId);
     }
 
     public void deleteLike(int filmId, int userId) {
-        Set<Integer> likes = filmStorage.loadLikes(filmId).collect(Collectors.toSet());
-        if (!likes.remove(userId)) {
-            throw new NotFoundException("Film not found");
-        }
-        filmStorage.saveLikes(filmId, likes);
+        filmStorage.deleteLike(filmId, userId);
     }
 
     public Set<Integer> getLikes(int id) {
-        return filmStorage.loadLikes(id).collect(Collectors.toSet());
+        return filmStorage.getLikes(id).collect(Collectors.toSet());
     }
 }

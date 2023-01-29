@@ -56,15 +56,11 @@ public class UserService {
     }
 
     protected void addFriend(int userId, int friendId) {
-        Set<Integer> likes = userStorage.getFriends(userId).collect(Collectors.toSet());
-        likes.add(friendId);
-        userStorage.saveFriend(userId, likes);
+        userStorage.saveFriend(userId, friendId);
     }
 
     protected void deleteFriend(int userId, int friendId) {
-        Set<Integer> likes = userStorage.getFriends(userId).collect(Collectors.toSet());
-        likes.remove(friendId);
-        userStorage.saveFriend(userId, likes);
+        userStorage.deleteFriends(userId, friendId);
     }
 
     public List<Integer> getFriends(int userId) {
@@ -86,7 +82,7 @@ public class UserService {
         List<User> friendFriends = getFriendsList(friendId);
         for (User user : userFriends) {
             for (User friend : friendFriends) {
-                if (user == friend) {
+                if (user.getId() == friend.getId()) {
                     returnedList.add(user);
                 }
             }

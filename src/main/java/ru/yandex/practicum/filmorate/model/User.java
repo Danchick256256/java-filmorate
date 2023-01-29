@@ -3,6 +3,8 @@ package ru.yandex.practicum.filmorate.model;
 import lombok.*;
 
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
@@ -10,7 +12,6 @@ import java.time.LocalDate;
 @Data
 @Builder
 @AllArgsConstructor
-@Entity
 public class User {
     private static int userId = 1;
 
@@ -23,6 +24,7 @@ public class User {
 
     @Getter
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
     @Email(message = "Wrong Email")
     @NotBlank(message = "Email is Mandatory")
