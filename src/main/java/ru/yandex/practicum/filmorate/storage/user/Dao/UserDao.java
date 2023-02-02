@@ -13,6 +13,9 @@ import ru.yandex.practicum.filmorate.storage.user.UserStorage;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -69,7 +72,7 @@ public class UserDao implements UserStorage {
     }
 
     @Override
-    public void saveFriend(int id, int friendId) {
+    public void addFriend(int id, int friendId) {
         String query = "INSERT INTO user_friends(user_id, friend_id) VALUES (?, ?);";
         try {
             jdbcTemplate.update(query, id, friendId);

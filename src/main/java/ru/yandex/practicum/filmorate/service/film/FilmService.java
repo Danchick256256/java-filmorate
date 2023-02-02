@@ -18,20 +18,20 @@ public class FilmService {
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
-    public void createFilm(Film film) {
-        filmStorage.createFilm(film);
+    public Film createFilm(Film film) {
+        return filmStorage.createFilm(film);
     }
 
     public Film getFilm(int id) {
         return filmStorage.getFilm(id);
     }
 
-    public void deleteFilm(int id) {
-        filmStorage.deleteFilm(id);
-    }
-
     public Film updateFilm(Film film) {
         return filmStorage.updateFilm(film);
+    }
+
+    public void deleteFilm(int id) {
+        filmStorage.deleteFilm(id);
     }
 
     public List<Film> getAllFilms() {

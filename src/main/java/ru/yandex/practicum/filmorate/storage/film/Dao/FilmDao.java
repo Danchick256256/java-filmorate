@@ -14,11 +14,16 @@ import ru.yandex.practicum.filmorate.storage.genre.GenreStorage;
 import ru.yandex.practicum.filmorate.storage.mpa.Dao.MpaDao;
 import ru.yandex.practicum.filmorate.storage.mpa.MpaStorage;
 
+import java.sql.Array;
+import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
@@ -37,9 +42,9 @@ public class FilmDao implements FilmStorage {
     @Override
     public Film createFilm(Film film) {
         String query = "INSERT INTO films(name, description, release_date, duration, mpa_rating_id, genre) VALUES (?, ?, ?, ?, ?, ?);";
-        //int[] genreArray = film.getGenres() != null ? film.getGenres().stream().mapToInt(Genre::getId).toArray() : new int[]{0};
-        Integer genreId = film.getGenres() == null ? null : film.getGenres().stream().mapToInt(Genre::getId).takeWhile(value -> value > 0).toArray()[0];
-        jdbcTemplate.update(query, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), genreId);
+        Set<Integer> genreArrayJava = film.getGenres() != null ? film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()) : Collections.emptySet();
+        Array genreArray = jdbcTemplate.execute((Connection connection) -> connection.createArrayOf("INTEGER", genreArrayJava.toArray()));
+        jdbcTemplate.update(query, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), genreArray);
         query = "SELECT * FROM films WHERE film_id = ?;";
         return jdbcTemplate.queryForObject(query, (resultSet, rowNum) -> mapFilm(resultSet), film.getId());
     }
@@ -55,11 +60,11 @@ public class FilmDao implements FilmStorage {
     }
 
     @Override
-    public Film updateFilm(Film film) { // помогите пожалуйста с хранением айди жанров как их нормально хранить в h2, пробовал INTEGER ARRAY[], INTEGER ARRAY[6] - не работает нормально и из-за этого 4 теста в жанрах не работают
+    public Film updateFilm(Film film) {
         String query = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ?, genre = ? WHERE film_id = ?;";
-        //int[] genreArray = film.getGenres() != null ? film.getGenres().stream().mapToInt(Genre::getId).toArray() : new int[0];
-        Integer genreId = film.getGenres() == null || film.getGenres().size() == 0 ? null : film.getGenres().stream().mapToInt(Genre::getId).takeWhile(value -> value > 0).toArray()[0];
-        jdbcTemplate.update(query, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), genreId, film.getId());
+        Set<Integer> genreArrayJava = film.getGenres() != null ? film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()) : Collections.emptySet();
+        Array genreArray = jdbcTemplate.execute((Connection connection) -> connection.createArrayOf("INTEGER", genreArrayJava.toArray()));
+        jdbcTemplate.update(query, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), genreArray, film.getId());
         query = "SELECT * FROM films WHERE film_id = ?;";
         try {
             return jdbcTemplate.queryForObject(query, (resultSet, rowNum) -> mapFilm(resultSet), film.getId());
@@ -97,7 +102,14 @@ public class FilmDao implements FilmStorage {
     }
 
     private Film mapFilm(ResultSet resultSet) throws SQLException {
-        List<Genre> genre = resultSet.getObject("genre") == null ? Collections.emptyList() : List.of(genreStorage.getGenre(resultSet.getInt("genre")));
+        List<Genre> genre;
+        if (resultSet.getArray("genre") != null) {
+            Array genreArray = resultSet.getArray("genre");
+            Object[] objectArray = (Object[]) genreArray.getArray();
+            genre = resultSet.getObject("genre") == null ? Collections.emptyList() : Arrays.stream(objectArray).map(genreId -> genreStorage.getGenre((Integer) genreId)).collect(Collectors.toList());
+        } else {
+            genre = Collections.emptyList();
+        }
         return Film.builder()
                 .id(resultSet.getInt("film_id"))
                 .name(resultSet.getString("name"))

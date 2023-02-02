@@ -47,7 +47,6 @@ public class UserService {
 
     public void addFriendsToEachOther(int userId, int friendId) {
         addFriend(userId, friendId);
-        addFriend(friendId, userId);
     }
 
     public void deleteFriendsToEachOther(int userId, int friendId) {
@@ -56,7 +55,7 @@ public class UserService {
     }
 
     protected void addFriend(int userId, int friendId) {
-        userStorage.saveFriend(userId, friendId);
+        userStorage.addFriend(userId, friendId);
     }
 
     protected void deleteFriend(int userId, int friendId) {
