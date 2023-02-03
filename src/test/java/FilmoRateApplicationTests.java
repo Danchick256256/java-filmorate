@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlGroup;
 import ru.yandex.practicum.filmorate.FilmorateApplication;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -24,6 +26,9 @@ import java.util.stream.Collectors;
 @SpringBootTest(classes = FilmorateApplication.class)
 @AutoConfigureTestDatabase
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
+@SqlGroup({
+        @Sql(executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD, scripts = {"/drop-test-data.sql", "/schema.sql", "/data.sql"}),
+})
 @Slf4j
 class FilmoRateApplicationTests {
     private final UserStorage userStorage;
@@ -120,7 +125,7 @@ class FilmoRateApplicationTests {
 
         userStorage.createUser(createdUser);
 
-        Assertions.assertEquals(2, (int) userStorage.getAllUsers().count());
+        Assertions.assertEquals(1, (int) userStorage.getAllUsers().count());
     }
 
     @Test
@@ -155,7 +160,7 @@ class FilmoRateApplicationTests {
 
 
     @Test
-    public void createFilm() { // почему-то падает The object is already closed [90007-214]; не понимаю в чем дело
+    public void createFilm() {
         Film createdFilm = Film.builder()
                 .id(1)
                 .name("nisi eiusmod")

@@ -41,11 +41,9 @@ public class FilmDao implements FilmStorage {
     }
     @Override
     public Film createFilm(Film film) {
-        String query = "INSERT INTO films(name, description, release_date, duration, mpa_rating_id, genre) VALUES (?, ?, ?, ?, ?, ?);";
         Set<Integer> genreArrayJava = film.getGenres() != null ? film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()) : Collections.emptySet();
-        Array genreArray = jdbcTemplate.execute((Connection connection) -> connection.createArrayOf("INTEGER", genreArrayJava.toArray()));
-        jdbcTemplate.update(query, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), genreArray);
-        query = "SELECT * FROM films WHERE film_id = ?;";
+        jdbcTemplate.execute((Connection connection) -> jdbcTemplate.update("INSERT INTO films(name, description, release_date, duration, mpa_rating_id, genre) VALUES (?, ?, ?, ?, ?, ?);", film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), connection.createArrayOf("INTEGER", genreArrayJava.toArray())));
+        String query = "SELECT * FROM films WHERE film_id = ?;";
         return jdbcTemplate.queryForObject(query, (resultSet, rowNum) -> mapFilm(resultSet), film.getId());
     }
 
@@ -61,11 +59,9 @@ public class FilmDao implements FilmStorage {
 
     @Override
     public Film updateFilm(Film film) {
-        String query = "UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ?, genre = ? WHERE film_id = ?;";
         Set<Integer> genreArrayJava = film.getGenres() != null ? film.getGenres().stream().map(Genre::getId).collect(Collectors.toSet()) : Collections.emptySet();
-        Array genreArray = jdbcTemplate.execute((Connection connection) -> connection.createArrayOf("INTEGER", genreArrayJava.toArray()));
-        jdbcTemplate.update(query, film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), genreArray, film.getId());
-        query = "SELECT * FROM films WHERE film_id = ?;";
+        jdbcTemplate.execute((Connection connection) -> jdbcTemplate.update("UPDATE films SET name = ?, description = ?, release_date = ?, duration = ?, mpa_rating_id = ?, genre = ? WHERE film_id = ?;", film.getName(), film.getDescription(), film.getReleaseDate(), film.getDuration(), film.getMpa().getId(), connection.createArrayOf("INTEGER", genreArrayJava.toArray()), film.getId()));
+        String query = "SELECT * FROM films WHERE film_id = ?;";
         try {
             return jdbcTemplate.queryForObject(query, (resultSet, rowNum) -> mapFilm(resultSet), film.getId());
         } catch (EmptyResultDataAccessException exception) {
